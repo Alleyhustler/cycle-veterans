@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Veterans</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .bg-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(8px) brightness(0.3);
+        }
+
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.05"/%3E%3C/svg%3E');
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Top bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .twitter-link {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 13px;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .twitter-link:hover {
+            color: #14F195;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #14F195 0%, #9945FF 100%);
+            border: none;
+            padding: 12px 28px;
+            color: #000;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .connect-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s;
+        }
+
+        .connect-btn:hover::before {
+            left: 100%;
+        }
+
+        .connect-btn.connected {
+            background: rgba(20, 241, 149, 0.1);
+            color: #14F195;
+            border: 1px solid #14F195;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 120px 40px 80px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 50px;
+            border-radius: 20%;
+            animation: float 6s ease-in-out infinite;
+            filter: drop-shadow(0 0 40px rgba(20, 241, 149, 0.4));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #14F195 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Verification Box */
+        .verification-box {
+            max-width: 700px;
+            margin: 80px auto;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            padding: 60px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .verification-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #14F195, transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .prompt-state {
+            text-align: center;
+        }
+
+        .prompt-title {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .prompt-desc {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        /* Scanning State */
+        .scanning-state {
+            width: 100%;
+        }
+
+        .scan-line {
+            font-size: 14px;
+            color: #14F195;
+            margin: 20px 0;
+            opacity: 0;
+            animation: lineAppear 0.5s forwards;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .scan-line::before {
+            content: '▸ ';
+            margin-right: 8px;
+        }
+
+        @keyframes lineAppear {
+            to { opacity: 1; }
+        }
+
+        /* Result State */
+        .result-state {
+            text-align: center;
+            opacity: 0;
+            animation: resultFade 1s forwards;
+        }
+
+        @keyframes resultFade {
+            to { opacity: 1; }
+        }
+
+        .result-badge {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .result-badge.veteran {
+            background: linear-gradient(135deg, #14F195 0%, #9945FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .result-badge.tourist {
+            color: #FF6B6B;
+        }
+
+        .result-message {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 2px solid #14F195;
+            padding: 16px 40px;
+            color: #14F195;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .action-btn:hover {
+            background: #14F195;
+            color: #000;
+        }
+
+        .action-btn.retry {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+        }
+
+        .action-btn.retry:hover {
+            background: #FF6B6B;
+            color: #000;
+        }
+
+        /* Hall Section */
+        .hall-section {
+            max-width: 1200px;
+            margin: 120px auto;
+            padding: 0 40px;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 60px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .veterans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 600px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .veteran-row {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            animation: rowSlide 40s linear infinite;
+        }
+
+        @keyframes rowSlide {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+
+        .wallet-addr {
+            color: #14F195;
+            font-weight: 700;
+        }
+
+        .veteran-info {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Info Section */
+        .info-section {
+            max-width: 900px;
+            margin: 120px auto;
+            padding: 80px 60px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .info-content {
+            font-size: 16px;
+            line-height: 2.2;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .info-content strong {
+            color: #14F195;
+            font-weight: 700;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 40px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 48px; }
+            .hero { padding: 80px 20px 60px; }
+            .top-bar { padding: 20px; flex-direction: column; gap: 20px; }
+            .verification-box { padding: 40px 30px; }
+            .veterans-grid { grid-template-columns: 1fr; }
+            .info-section { padding: 40px 30px; margin: 80px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-wrapper">
+        <img src="background.png" alt="">
+    </div>
+    <div class="grain"></div>
+
+    <div class="content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <a href="https://x.com/CycleVeterans" target="_blank" class="twitter-link">@CycleVeterans</a>
+            <button class="connect-btn" id="connectBtn">Connect Wallet</button>
+        </div>
+
+        <!-- Hero -->
+        <section class="hero">
+            <img src="WE_DGAF_IF_THERE_IS_NO_VOLUME__4_-removebg-preview.png" alt="Cycle Veterans" class="logo">
+            <h1>CYCLE VETERANS</h1>
+            <p class="subtitle">Rewards for those who stayed</p>
+        </section>
+
+        <!-- Verification Box -->
+        <section class="verification-box">
+            <div id="promptState" class="prompt-state">
+                <div class="prompt-title">Verify Your Status</div>
+                <p class="prompt-desc">Connect your Solana wallet to check if you qualify as a veteran.<br>Only survivors of the last cycle receive recognition.</p>
+            </div>
+
+            <div id="scanningState" class="scanning-state hidden">
+                <div id="scanLines"></div>
+            </div>
+
+            <div id="resultState" class="result-state hidden"></div>
+        </section>
+
+        <!-- Hall of Veterans -->
+        <section class="hall-section">
+            <h2 class="section-title">Hall of Veterans</h2>
+            <div class="veterans-grid" id="veteransGrid"></div>
+        </section>
+
+        <!-- Info -->
+        <section class="info-section">
+            <h2 class="section-title">Protocol</h2>
+            <div class="info-content">
+                <strong>Cycle Veterans</strong> identifies wallets that persisted through previous market downturns.<br><br>
+                The contract verifies continuous presence, holding patterns, and sell inactivity.<br><br>
+                Survivor wallets receive on-chain recognition and periodic bonuses.<br><br>
+                <strong>Tourists are forgotten. Veterans are remembered.</strong>
+            </div>
+        </section>
+
+        <footer>
+            Built on Solana • For those who endured
+        </footer>
+    </div>
+
+    <script>
+        let connected = null;
+        const connectBtn = document.getElementById('connectBtn');
+        const promptState = document.getElementById('promptState');
+        const scanningState = document.getElementById('scanningState');
+        const resultState = document.getElementById('resultState');
+        const scanLines = document.getElementById('scanLines');
+
+        // Generate Solana-style address
+        function generateSolAddress() {
+            const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+            let addr = '';
+            for (let i = 0; i < 44; i++) {
+                addr += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return addr;
+        }
+
+        function shortAddr(addr) {
+            return addr.slice(0, 4) + '...' + addr.slice(-4);
+        }
+
+        // Populate hall
+        function populateHall() {
+            const grid = document.getElementById('veteransGrid');
+            const veterans = [];
+            
+            for (let i = 0; i < 30; i++) {
+                const addr = generateSolAddress();
+                const cycles = Math.floor(Math.random() * 6) + 1;
+                const cycleNum = Math.floor(Math.random() * 12) + 1;
+                
+                veterans.push({addr, cycles, cycleNum});
+            }
+
+            // Duplicate for seamless scroll
+            [...veterans, ...veterans].forEach(v => {
+                const row = document.createElement('div');
+                row.className = 'veteran-row';
+                row.innerHTML = `
+                    <span class="wallet-addr">${shortAddr(v.addr)}</span>
+                    <span class="veteran-info">Cycle ${v.cycleNum} • ${v.cycles}x Survivor</span>
+                `;
+                grid.appendChild(row);
+            });
+        }
+
+        // Connect wallet
+        connectBtn.addEventListener('click', async () => {
+            if (connected) {
+                startScan();
+            } else {
+                connectBtn.textContent = 'Connecting...';
+                await sleep(1200);
+                
+                connected = generateSolAddress();
+                connectBtn.textContent = shortAddr(connected);
+                connectBtn.classList.add('connected');
+                
+                // Check cache
+                const cached = statusCache[connected];
+                if (cached !== undefined) {
+                    showResult(cached);
+                } else {
+                    startScan();
+                }
+            }
+        });
+
+        async function startScan() {
+            promptState.classList.add('hidden');
+            resultState.classList.add('hidden');
+            scanningState.classList.remove('hidden');
+            scanLines.innerHTML = '';
+
+            const messages = [
+                'Initializing Solana RPC connection',
+                'Querying historical transaction data',
+                'Analyzing wallet age and balance history',
+                'Detecting sell transactions during crash periods',
+                'Cross-referencing with cycle timestamps',
+                'Calculating survival score',
+                'Verifying veteran status'
+            ];
+
+            for (let msg of messages) {
+                await sleep(700);
+                const line = document.createElement('div');
+                line.className = 'scan-line';
+                line.textContent = msg;
+                scanLines.appendChild(line);
+            }
+
+            await sleep(1000);
+
+            // Determine status (deterministic hash)
+            const isVet = hashCode(connected) % 100 < 65;
+            statusCache[connected] = isVet;
+            showResult(isVet);
+        }
+
+        function showResult(isVet) {
+            scanningState.classList.add('hidden');
+            resultState.classList.remove('hidden');
+
+            if (isVet) {
+                resultState.innerHTML = `
+                    <div class="result-badge veteran">VETERAN DETECTED</div>
+                    <div class="result-message">
+                        You survived the last cycle.<br>
+                        Your wallet has been recognized on-chain.
+                    </div>
+                    <button class="action-btn" onclick="claim()">Claim Veteran Bonus</button>
+                `;
+            } else {
+                resultState.innerHTML = `
+                    <div class="result-badge tourist">TOURIST DETECTED</div>
+                    <div class="result-message">
+                        You left during the storm.<br>
+                        No rewards available.
+                    </div>
+                    <button class="action-btn retry" onclick="retry()">Try Different Wallet</button>
+                `;
+            }
+        }
+
+        function claim() {
+            alert('Veteran Bonus Claimed!\n\nYour status has been recorded.\nPeriodic rewards will be distributed to your wallet.');
+        }
+
+        function retry() {
+            connected = null;
+            connectBtn.textContent = 'Connect Wallet';
+            connectBtn.classList.remove('connected');
+            resultState.classList.add('hidden');
+            promptState.classList.remove('hidden');
+        }
+
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        const statusCache = {};
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        populateHall();
+    </script>
+</body>
+</html>
